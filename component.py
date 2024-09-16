@@ -1,4 +1,4 @@
-import rendar
+import render
 
 import tkinter as tk
 from tkinter import *
@@ -79,7 +79,7 @@ class Window:
         context = self.user_entries_frame.get_entries_data()
         template_file_name = self.template_frame.select_template_file_combobox.get()
 
-        self.text_frame.update(rendar.get_render_text(template_file_name, context))
+        self.text_frame.update(render.get_render_text(template_file_name, context))
 
     def update_x_scrollable_frame(self, event=None):
         self.x_scrollable_frame.update()

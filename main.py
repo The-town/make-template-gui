@@ -8,7 +8,6 @@ env = Environment(
 )
 
 template = env.get_template("mytemplate.txt")
-# print(template.render({"A": "りんご", "B": "みかん"}))
 
 window = component.Window()
 window.root.mainloop()
