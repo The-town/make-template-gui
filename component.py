@@ -44,7 +44,8 @@ class XScrollableFrame(tk.Frame):
 
 class Window:
     """
-    GUIのメインウィンドウ
+    GUIアプリケーションのメインウィンドウを表すクラス。
+    このクラスはウィンドウ全体のレイアウトや、各種操作のバインドを担当します。
     """
     def __init__(self):
         self.root = tk.Tk()
@@ -66,6 +67,21 @@ class Window:
         self.root.bind("<Configure>", self.update_x_scrollable_frame)
 
     def drive_combobox_event(self, event=None):
+        """
+        コンボボックスでテンプレートファイルが選択されたときの処理。
+
+        選択されたテンプレートファイルに含まれる変数を取得し、
+        入力欄を動的に作成、配置します。
+
+        Parameters
+        ----------
+        event : tkinter.Event, optional
+            コンボボックスが選択された際に発生するイベントオブジェクト。デフォルトはNone。
+
+        Returns
+        -------
+        None
+        """
         template_dir = self.template_frame.template_dir.get()
         combobox_value = event.widget.get()
         template_file_path = os.path.join(template_dir, combobox_value)
@@ -76,12 +92,34 @@ class Window:
         self.user_entries_frame.grid_entries()
 
     def render(self):
+        """
+        ユーザーの入力に基づきテンプレートをレンダリングし、結果をテキストエリアに表示します。
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        None
+        """
         context = self.user_entries_frame.get_entries_data()
         template_file_name = self.template_frame.select_template_file_combobox.get()
 
         self.text_frame.update(render.get_render_text(template_file_name, context))
 
     def update_x_scrollable_frame(self, event=None):
+        """
+        ウィンドウのサイズ変更に伴ってスクロールフレームの表示領域を更新します。
+
+        Parameters
+        ----------
+        event : tkinter.Event, optional
+            ウィンドウサイズ変更時に発生するイベントオブジェクト。デフォルトはNone。
+
+        Returns
+        -------
+        None
+        """
         self.x_scrollable_frame.update()
 
 
