@@ -29,10 +29,14 @@ class XScrollableFrame(tk.Frame):
 
         self.canvas.grid(row=0, column=0, sticky=EW)
 
-        scrollbar = Scrollbar(main_frame, orient=tk.HORIZONTAL, command=self.canvas.xview)
-        scrollbar.grid(row=1, column=0, sticky=EW)
+        xscrollbar = Scrollbar(main_frame, orient=tk.HORIZONTAL, command=self.canvas.xview)
+        xscrollbar.grid(row=1, column=0, sticky=EW)
 
-        self.canvas.configure(xscrollcommand=scrollbar.set)
+        yscrollbar = Scrollbar(main_frame, orient=tk.VERTICAL, command=self.canvas.yview)
+        yscrollbar.grid(row=0, column=1, sticky=NS)
+
+        self.canvas.configure(xscrollcommand=xscrollbar.set)
+        self.canvas.configure(yscrollcommand=yscrollbar.set)
         self.canvas.bind('<Configure>', self.update)
 
         self.inner_frame = tk.Frame(self.canvas)
@@ -102,10 +106,14 @@ class Window:
         -------
         None
         """
-        context = self.user_entries_frame.get_entries_data()
-        template_file_name = self.template_frame.select_template_file_combobox.get()
+        contexts = self.user_entries_frame.get_entries_data()
 
-        self.text_frame.update(render.get_render_text(template_file_name, context))
+        template_file_name = self.template_frame.select_template_file_combobox.get()
+        tmp = []
+        for context in contexts:
+            tmp.append(render.get_render_text(template_file_name, context))
+
+        self.text_frame.update("\n----\n".join(tmp))
 
     def update_x_scrollable_frame(self, event=None):
         """
@@ -262,7 +270,9 @@ class UserEntries:
     def __init__(self, parent: XScrollableFrame):
         self.inner_frame = parent.inner_frame
         self.inner_frame["pady"] = 10
-        self.entries: list[UserEntry] = []
+        self.entries: dict[int: UserEntry] = {}
+        self.buttons: list = []
+        self.row = 0
 
     def create_entries(self, entry_names: tuple):
         """
@@ -277,25 +287,66 @@ class UserEntries:
         None
 
         """
+        self.entries[self.row] = []
+
+        if entry_names == ():
+            return None
+
         for name in entry_names:
-            self.entries.append(UserEntry(name, self.inner_frame))
+            self.entries[self.row].append(UserEntry(name, self.inner_frame))
+
+        b = tk.Button(self.inner_frame, text="+", height=2, width=2, command=self.add_entry)
+        self.buttons.append(b)
+
+    def add_entry(self, event=None):
+        """
+        エントリーを追加するメソッド
+
+        Parameters
+        ----------
+        event:
+            Tkinterのイベント
+
+        Returns
+        -------
+        None
+        """
+        self.row += 1
+        entry_names = tuple([entry.name for entry in self.entries[0]])
+
+        self.create_entries(entry_names)
+        self.grid_entries()
 
     def grid_entries(self):
-        for i, entry in enumerate(self.entries):
-            entry.grid(row=0, column=i)
+        for i, entry in enumerate(self.entries[self.row]):
+            entry.grid(row=self.row, column=i)
+
+        if len(self.buttons) == 0:
+            return
+
+        self.buttons[self.row].grid(row=self.row, column=len(self.entries[self.row]))
 
     def delete_entries(self):
-        for entry in self.entries:
-            entry.destroy()
+        for row in self.entries.keys():
+            for entry in self.entries[row]:
+                entry.destroy()
 
-        self.entries = []
+        for b in self.buttons:
+            b.destroy()
 
-    def get_entries_data(self) -> dict:
-        entries_data = {}
-        for entry in self.entries:
-            entries_data[entry.name] = entry.get()
+        self.row = 0
+        self.entries = {}
+        self.buttons = []
 
-        return entries_data
+    def get_entries_data(self) -> list:
+        tmp = []
+        for row in range(self.row + 1):
+            entries_data = {}
+            for entry in self.entries[row]:
+                entries_data[entry.name] = entry.get()
+            tmp.append(entries_data)
+
+        return tmp
 
 
 class TextDisplayWindow:
