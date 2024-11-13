@@ -2,7 +2,7 @@ import render
 
 import tkinter as tk
 from tkinter import *
-from tkinter.ttk import *
+import ttkbootstrap as ttk
 from tkinter import filedialog, scrolledtext
 import ctypes
 import os
@@ -12,19 +12,19 @@ import re
 ctypes.windll.shcore.SetProcessDpiAwareness(1)
 
 
-class XScrollableFrame(tk.Frame):
+class XScrollableFrame(ttk.Frame):
     """
     スクロールできるようにCanvasを使用したFrame
     """
     def __init__(self, parent):
         super().__init__(parent)
 
-        main_frame = tk.Frame(parent, padx=10, pady=10)
-        main_frame.grid(row=1, column=0, sticky=NSEW)
+        main_frame = ttk.Frame(parent)
+        main_frame.grid(row=1, column=0, sticky=NSEW, padx=10, pady=10)
         main_frame.grid_columnconfigure([0, ], weight=1)
         main_frame.grid_rowconfigure([0, 1], weight=1)
 
-        self.canvas = tk.Canvas(main_frame)
+        self.canvas = ttk.Canvas(main_frame)
         self.canvas["height"] = 150
 
         self.canvas.grid(row=0, column=0, sticky=EW)
@@ -138,33 +138,29 @@ class Template:
     def __init__(self, parent: tk.Tk, grid: tuple):
         self.parent = parent
 
-        frame = tk.Frame(self.parent, padx=10, pady=10)
+        frame = ttk.Frame(self.parent)
         frame["width"] = 100
-        frame.grid(row=grid[0], column=grid[1], sticky=NSEW)
+        frame.grid(row=grid[0], column=grid[1], sticky=NSEW, padx=10, pady=10)
         frame.grid_columnconfigure([0, 1, 2], weight=1)
         frame.grid_rowconfigure([0, 1], weight=1)
 
         self.template_dir = tk.StringVar(value="テンプレートディレクトリを選択してください")
 
-        template_dir_label = tk.Label(frame, wraplength=300)
+        template_dir_label = ttk.Label(frame, wraplength=300)
         template_dir_label["textvariable"] = self.template_dir
-        template_dir_label["padx"] = 10
-        template_dir_label["pady"] = 10
         template_dir_label.grid(row=0, column=1, sticky=EW)
 
-        read_button = tk.Button(frame)
+        read_button = ttk.Button(frame)
         read_button.grid(row=0, column=0)
         read_button["text"] = "選択"
-        read_button["height"] = 2
         read_button["command"] = self.get_template_directory
 
-        self.select_template_file_combobox = Combobox(frame)
+        self.select_template_file_combobox = ttk.Combobox(frame)
         self.select_template_file_combobox.grid(row=0, column=2, sticky=EW)
 
-        self.render_button = tk.Button(frame)
+        self.render_button = ttk.Button(frame)
         self.render_button.grid(row=1, column=0, columnspan=3, pady=10, sticky=EW)
         self.render_button["text"] = "レンダリング"
-        self.render_button["height"] = 2
 
     def set_render_command(self, command_func):
         self.render_button["command"] = command_func
@@ -245,17 +241,17 @@ class UserEntry:
     """
     def __init__(self, name: str, parent: tk.Frame):
         self.name = name
-        self.frame = tk.Frame(parent, padx=10, pady=10)
-        self.entry = tk.Entry(self.frame, highlightcolor="blue", highlightthickness=1)
-        self.label = tk.Label(self.frame, text=name)
+        self.frame = ttk.Frame(parent)
+        self.entry = ttk.Entry(self.frame)
+        self.label = ttk.Label(self.frame, text=name)
 
     def get(self) -> str:
         return self.entry.get()
 
     def grid(self, row: int, column: int):
-        self.frame.grid(row=row, column=column, sticky=NSEW)
-        self.label.grid(row=0, column=0)
-        self.entry.grid(row=1, column=0)
+        self.frame.grid(row=row, column=column, sticky=NSEW, pady=10)
+        self.label.grid(row=0, column=0, padx=10)
+        self.entry.grid(row=1, column=0, padx=10)
 
     def destroy(self):
         self.frame.destroy()
@@ -271,7 +267,7 @@ class UserEntries:
         self.inner_frame = parent.inner_frame
         self.inner_frame["pady"] = 10
         self.entries: dict[int: UserEntry] = {}
-        self.buttons: list = []
+        self.buttons: dict[int: [Button, Button]] = {}
         self.row = 0
 
     def create_entries(self, entry_names: tuple):
@@ -295,8 +291,10 @@ class UserEntries:
         for name in entry_names:
             self.entries[self.row].append(UserEntry(name, self.inner_frame))
 
-        b = tk.Button(self.inner_frame, text="+", height=2, width=2, command=self.add_entry)
-        self.buttons.append(b)
+        button_index = self.row
+        plus_b = ttk.Button(self.inner_frame, text="+", width=2, command=self.add_entry)
+        minus_b = ttk.Button(self.inner_frame, text="-", width=2, command=lambda: self.delete_entry(button_index))
+        self.buttons[self.row] = [plus_b, minus_b]
 
     def add_entry(self, event=None):
         """
@@ -324,23 +322,53 @@ class UserEntries:
         if len(self.buttons) == 0:
             return
 
-        self.buttons[self.row].grid(row=self.row, column=len(self.entries[self.row]))
+        for i, b in enumerate(self.buttons[self.row]):
+            b.grid(row=self.row, column=len(self.entries[self.row]) + i, padx=5)
+
+    def delete_entry(self, row):
+        """
+        指定されたエントリーを削除するメソッド
+
+        Parameters
+        ----------
+        row: int
+            ボタンを配置した行数
+
+        Returns
+        -------
+        None
+        """
+        if self.row == 0:
+            return
+
+        for e in self.entries[row]:
+            e.destroy()
+
+        del self.entries[row]
+
+        for b in self.buttons[row]:
+            b.destroy()
+
+        del self.buttons[row]
+
+        self.row -= 1
 
     def delete_entries(self):
         for row in self.entries.keys():
             for entry in self.entries[row]:
                 entry.destroy()
 
-        for b in self.buttons:
-            b.destroy()
+        for row in self.buttons.keys():
+            for b in self.buttons[row]:
+                b.destroy()
 
         self.row = 0
         self.entries = {}
-        self.buttons = []
+        self.buttons = {}
 
     def get_entries_data(self) -> list:
         tmp = []
-        for row in range(self.row + 1):
+        for row in self.entries.keys():
             entries_data = {}
             for entry in self.entries[row]:
                 entries_data[entry.name] = entry.get()
@@ -354,9 +382,10 @@ class TextDisplayWindow:
     テンプレートから生成されるテキストを表示するクラス
     """
     def __init__(self, parent, grid: tuple):
-        self.frame = tk.Frame(parent, padx=10, pady=10)
+        self.frame = ttk.Frame(parent)
 
         self.text = scrolledtext.ScrolledText(self.frame)
+        self.text["height"] = 10
 
         self.grid(row=grid[0], column=grid[1])
 
