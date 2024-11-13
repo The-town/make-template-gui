@@ -39,7 +39,7 @@ class XScrollableFrame(ttk.Frame):
         self.canvas.configure(yscrollcommand=yscrollbar.set)
         self.canvas.bind('<Configure>', self.update)
 
-        self.inner_frame = tk.Frame(self.canvas)
+        self.inner_frame = ttk.Frame(self.canvas)
         self.canvas.create_window((0, 0), window=self.inner_frame, anchor="nw")
 
     def update(self, event=None):
@@ -52,11 +52,10 @@ class Window:
     このクラスはウィンドウ全体のレイアウトや、各種操作のバインドを担当します。
     """
     def __init__(self):
-        self.root = tk.Tk()
-        self.root["bg"] = "blue"
+        self.root = ttk.Window()
         self.root.geometry("800x800")
         self.root.grid_columnconfigure([0, ], weight=1)
-        self.root.grid_rowconfigure([0, 1, 2], weight=1)
+        self.root.grid_rowconfigure([1, 2], weight=1)
 
         self.template_frame = Template(self.root, (0, 0))
 
@@ -140,7 +139,7 @@ class Template:
 
         frame = ttk.Frame(self.parent)
         frame["width"] = 100
-        frame.grid(row=grid[0], column=grid[1], sticky=NSEW, padx=10, pady=10)
+        frame.grid(row=grid[0], column=grid[1], sticky=EW, padx=10, pady=10)
         frame.grid_columnconfigure([0, 1, 2], weight=1)
         frame.grid_rowconfigure([0, 1], weight=1)
 
@@ -265,7 +264,6 @@ class UserEntries:
     """
     def __init__(self, parent: XScrollableFrame):
         self.inner_frame = parent.inner_frame
-        self.inner_frame["pady"] = 10
         self.entries: dict[int: UserEntry] = {}
         self.buttons: dict[int: [Button, Button]] = {}
         self.row = 0
