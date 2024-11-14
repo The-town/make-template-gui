@@ -8,7 +8,6 @@ import ctypes
 import os
 import re
 
-from typing import LiteralString
 
 # WindowsでGUIの解像度が低くなるため、これを設定して回避する
 ctypes.windll.shcore.SetProcessDpiAwareness(1)
