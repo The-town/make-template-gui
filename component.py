@@ -3,10 +3,12 @@ import render
 import tkinter as tk
 from tkinter import *
 import ttkbootstrap as ttk
-from tkinter import filedialog, scrolledtext
+from tkinter import scrolledtext
 import ctypes
 import os
 import re
+
+from typing import LiteralString
 
 # WindowsでGUIの解像度が低くなるため、これを設定して回避する
 ctypes.windll.shcore.SetProcessDpiAwareness(1)
@@ -85,9 +87,8 @@ class Window:
         -------
         None
         """
-        template_dir = self.template_frame.template_dir.get()
         combobox_value = event.widget.get()
-        template_file_path = os.path.join(template_dir, combobox_value)
+        template_file_path = os.path.join(render.TEMPLATE_DIR, combobox_value)
 
         variables = self.template_frame.get_variables_in_template(template_file_path)
         self.user_entries_frame.delete_entries()
@@ -140,26 +141,17 @@ class Template:
         frame = ttk.Frame(self.parent)
         frame["width"] = 100
         frame.grid(row=grid[0], column=grid[1], sticky=EW, padx=10, pady=10)
-        frame.grid_columnconfigure([0, 1, 2], weight=1)
+        frame.grid_columnconfigure([0], weight=1)
         frame.grid_rowconfigure([0, 1], weight=1)
 
-        self.template_dir = tk.StringVar(value="テンプレートディレクトリを選択してください")
-
-        template_dir_label = ttk.Label(frame, wraplength=300)
-        template_dir_label["textvariable"] = self.template_dir
-        template_dir_label.grid(row=0, column=1, sticky=EW)
-
-        read_button = ttk.Button(frame)
-        read_button.grid(row=0, column=0)
-        read_button["text"] = "選択"
-        read_button["command"] = self.get_template_directory
-
         self.select_template_file_combobox = ttk.Combobox(frame)
-        self.select_template_file_combobox.grid(row=0, column=2, sticky=EW)
+        self.select_template_file_combobox.grid(row=0, column=0, sticky=EW)
 
         self.render_button = ttk.Button(frame)
-        self.render_button.grid(row=1, column=0, columnspan=3, pady=10, sticky=EW)
+        self.render_button.grid(row=1, column=0, pady=10, sticky=EW)
         self.render_button["text"] = "レンダリング"
+
+        self.get_template_directory()
 
     def set_render_command(self, command_func):
         self.render_button["command"] = command_func
@@ -172,9 +164,7 @@ class Template:
         -------
         None
         """
-        template_dir = filedialog.askdirectory(title="テンプレート保管ディレクトリ")
-        self.template_dir.set(template_dir)
-        self.set_template_file_combobox(template_dir)
+        self.set_template_file_combobox(render.TEMPLATE_DIR)
 
     def set_template_file_combobox(self, template_dir: str) -> None:
         """
@@ -215,13 +205,13 @@ class Template:
         return tuple(template_files)
 
     @staticmethod
-    def get_variables_in_template(template_file_path: str) -> tuple:
+    def get_variables_in_template(template_file_path) -> tuple:
         """
         テンプレートファイルに記載されている変数の一覧を取得する
 
         Parameters
         ----------
-        template_file_path: str
+        template_file_path
             テンプレートファイルパス
 
         Returns
