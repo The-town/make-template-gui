@@ -1,8 +1,9 @@
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 import os
 
-TEMPLATE_DIR = os.path.join(os.path.dirname(__file__), "template")
-
+TEMPLATE_DIR = os.path.join(os.getcwd(), "template")
+if not os.path.isdir(TEMPLATE_DIR):
+    os.mkdir(TEMPLATE_DIR)
 
 env = Environment(
     loader=FileSystemLoader(TEMPLATE_DIR),
