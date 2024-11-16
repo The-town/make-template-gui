@@ -12,6 +12,8 @@ import re
 # WindowsでGUIの解像度が低くなるため、これを設定して回避する
 ctypes.windll.shcore.SetProcessDpiAwareness(1)
 
+MOUSE_WHEEL_DELTA_WINDOWS = 120
+
 
 class XScrollableFrame(ttk.Frame):
     """
@@ -40,11 +42,16 @@ class XScrollableFrame(ttk.Frame):
         self.canvas.configure(yscrollcommand=yscrollbar.set)
         self.canvas.bind('<Configure>', self.update)
 
-        self.inner_frame = ttk.Frame(self.canvas)
+        self.inner_frame = ttk.Frame(self.canvas, name="inner_frame")
+        self.inner_frame.bind_all("<MouseWheel>", self._on_mousewheel)
         self.canvas.create_window((0, 0), window=self.inner_frame, anchor="nw")
 
     def update(self, event=None):
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+
+    def _on_mousewheel(self, event=None):
+        if self.inner_frame.winfo_name() in str(event.widget):
+            self.canvas.yview_scroll(int(-1 * (event.delta / MOUSE_WHEEL_DELTA_WINDOWS)), "units")
 
 
 class Window:
